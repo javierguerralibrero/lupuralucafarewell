@@ -18,8 +18,9 @@ PUBLIC_DIR = os.path.join(os.path.dirname(__file__), "../public/avatars")
 DAN_VOICE_ID = "31e2fd6e7c924bc9be987ac4cfaac5e8"     # Warm William — closest to Forrest Gump style
 RALUCA_VOICE_ID = "e85822bd14e144e8b6fe73da2fb1085c"  # Camila Vega Excited — female Spanish
 
-DAN_PHOTO = "/Users/javierguerra-librero/LupuRaluca/Benjumeda Jorge/0f231e02-d3ee-414a-a5fb-d419a8f05699.jpg"
-RALUCA_PHOTO = "/Users/javierguerra-librero/LupuRaluca/Isabel Abellán Serna/58c03797-272a-4434-9e04-446073c569e4.jpg"
+SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
+DAN_PHOTO = os.path.join(SCRIPTS_DIR, "avatar_dan_nobg.png")
+RALUCA_PHOTO = os.path.join(SCRIPTS_DIR, "avatar_raluca_nobg.png")
 
 DAN_JOKES = [
     "Mama always said life is like a marathon — you never know what finish line you're gonna get.",
@@ -57,19 +58,14 @@ def api_request(method, url, data=None, headers=None, raw_data=None, content_typ
 
 
 def prepare_photo(path, size=512):
-    """Crop to square, resize, return JPEG bytes."""
-    img = Image.open(path)
-    w, h = img.size
-    side = min(w, h)
-    cx, cy = w // 2, h // 4  # bias toward top (face)
-    half = side // 2
-    left = max(0, cx - half)
-    top = max(0, cy - half // 2)
-    right = min(w, left + side)
-    bottom = min(h, top + side)
-    cropped = img.crop((left, top, right, bottom)).resize((size, size), Image.LANCZOS)
+    """Composite transparent PNG onto dark background, resize, return JPEG bytes."""
+    img = Image.open(path).convert("RGBA")
+    # Composite onto dark background matching site color
+    bg = Image.new("RGBA", img.size, (10, 10, 10, 255))
+    bg.paste(img, mask=img.split()[3])
+    final = bg.convert("RGB").resize((size, size), Image.LANCZOS)
     buf = io.BytesIO()
-    cropped.save(buf, format="JPEG", quality=92)
+    final.save(buf, format="JPEG", quality=92)
     return buf.getvalue()
 
 
