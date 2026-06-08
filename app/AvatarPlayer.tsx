@@ -6,14 +6,38 @@ interface Props {
   prefix: string;
   count: number;
   borderColor: string;
+  circular?: boolean;
 }
 
-export default function AvatarPlayer({ prefix, count, borderColor }: Props) {
+export default function AvatarPlayer({ prefix, count, borderColor, circular }: Props) {
   const [current, setCurrent] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   function handleEnded() {
     setCurrent((prev) => (prev + 1) % count);
+  }
+
+  if (circular) {
+    return (
+      <div style={{
+        width: "100%",
+        aspectRatio: "1",
+        borderRadius: "50%",
+        overflow: "hidden",
+        border: `3px solid ${borderColor}`,
+        background: "#111",
+      }}>
+        <video
+          ref={videoRef}
+          key={current}
+          src={`/avatars/${prefix}_${current}.mp4`}
+          autoPlay
+          playsInline
+          onEnded={handleEnded}
+          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+        />
+      </div>
+    );
   }
 
   return (

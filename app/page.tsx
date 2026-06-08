@@ -124,16 +124,16 @@ export default async function HomePage() {
       </header>
 
       {/* Avatars */}
-      <section style={{ maxWidth: "800px", margin: "40px auto", padding: "0 20px", display: "flex", gap: "40px", justifyContent: "center", flexWrap: "wrap" }}>
+      <section style={{ maxWidth: "600px", margin: "40px auto", padding: "0 20px", display: "flex", gap: "48px", justifyContent: "center", flexWrap: "wrap" }}>
         {/* Dan */}
-        <div style={{ flex: "1", minWidth: "280px", maxWidth: "340px", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
-          <AvatarPlayer prefix="dan" count={4} borderColor="#e94560" />
+        <div style={{ width: "220px", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
+          <AvatarPlayer prefix="dan" count={4} borderColor="#e94560" circular />
           <p style={{ fontFamily: "Impact, sans-serif", fontSize: "1.4rem", letterSpacing: "0.1em", color: "#fff", margin: 0 }}>DAN LUPU</p>
         </div>
 
         {/* Raluca */}
-        <div style={{ flex: "1", minWidth: "280px", maxWidth: "340px", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
-          <AvatarPlayer prefix="raluca" count={4} borderColor="#f5c97a" />
+        <div style={{ width: "220px", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
+          <AvatarPlayer prefix="raluca" count={4} borderColor="#f5c97a" circular />
           <p style={{ fontFamily: "Impact, sans-serif", fontSize: "1.4rem", letterSpacing: "0.1em", color: "#fff", margin: 0 }}>RALUCA</p>
         </div>
       </section>
