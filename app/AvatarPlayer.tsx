@@ -24,7 +24,6 @@ export default function AvatarPlayer({ prefix, count, borderColor }: Props) {
       overflow: "hidden",
       border: `2px solid ${borderColor}`,
       background: "#111",
-      aspectRatio: "9/16",
     }}>
       <video
         ref={videoRef}
@@ -33,7 +32,7 @@ export default function AvatarPlayer({ prefix, count, borderColor }: Props) {
         autoPlay
         playsInline
         onEnded={handleEnded}
-        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+        style={{ width: "100%", height: "auto", display: "block" }}
       />
     </div>
   );
