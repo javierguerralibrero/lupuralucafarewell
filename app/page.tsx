@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { list } from "@vercel/blob";
 import AvatarPlayer from "./AvatarPlayer";
+import HomeBg from "./HomeBg";
 
 interface Friend {
   name: string;
@@ -19,6 +20,23 @@ async function getFriends(): Promise<Friend[]> {
     );
     friends.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
     return friends;
+  } catch {
+    return [];
+  }
+}
+
+async function getBgPhotoUrls(): Promise<string[]> {
+  try {
+    const { blobs } = await list({ prefix: "madrid-photos/manifest.json" });
+    if (!blobs.length) return [];
+    const manifest: { photos: { url: string }[] } = await fetch(blobs[0].url, { cache: "no-store" }).then((r) => r.json());
+    const urls = manifest.photos.map((p) => p.url);
+    // Shuffle server-side so each visit is different
+    for (let i = urls.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [urls[i], urls[j]] = [urls[j], urls[i]];
+    }
+    return urls;
   } catch {
     return [];
   }
@@ -47,10 +65,11 @@ const ralucaJokes = [
 const sizeClasses = ["text-2xl", "text-lg", "text-base", "text-xl", "text-sm", "text-2xl", "text-lg", "text-base"];
 
 export default async function HomePage() {
-  const friends = await getFriends();
+  const [friends, bgUrls] = await Promise.all([getFriends(), getBgPhotoUrls()]);
 
   return (
-    <div style={{ background: "#0a0a0a", minHeight: "100vh", color: "#fff" }}>
+    <div style={{ background: "#0a0a0a", minHeight: "100vh", color: "#fff", position: "relative" }}>
+      <HomeBg urls={bgUrls} />
       <style>{`
         @keyframes jokeRotate {
           0%, 20% { opacity: 1; }
@@ -127,13 +146,13 @@ export default async function HomePage() {
       <section style={{ maxWidth: "600px", margin: "40px auto", padding: "0 20px", display: "flex", gap: "48px", justifyContent: "center", flexWrap: "wrap" }}>
         {/* Dan */}
         <div style={{ width: "220px", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
-          <AvatarPlayer prefix="dan" count={1} startIndex={1} borderColor="#e94560" circular zoom={1.9} yShift={5} />
+          <AvatarPlayer prefix="dan" count={1} startIndex={1} borderColor="#e94560" />
           <p style={{ fontFamily: "Impact, sans-serif", fontSize: "1.4rem", letterSpacing: "0.1em", color: "#fff", margin: 0 }}>DAN LUPU</p>
         </div>
 
         {/* Raluca */}
         <div style={{ width: "220px", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
-          <AvatarPlayer prefix="raluca" count={1} startIndex={0} borderColor="#f5c97a" circular zoom={1.5} yShift={5} />
+          <AvatarPlayer prefix="raluca" count={1} startIndex={0} borderColor="#f5c97a" />
           <p style={{ fontFamily: "Impact, sans-serif", fontSize: "1.4rem", letterSpacing: "0.1em", color: "#fff", margin: 0 }}>RALUCA</p>
         </div>
       </section>
