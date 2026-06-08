@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { list } from "@vercel/blob";
+import AvatarPlayer from "./AvatarPlayer";
 
 interface Friend {
   name: string;
@@ -8,12 +10,15 @@ interface Friend {
 
 async function getFriends(): Promise<Friend[]> {
   try {
-    const baseUrl =
-      process.env.NEXT_PUBLIC_BASE_URL ||
-      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
-    const res = await fetch(`${baseUrl}/api/friends`, { cache: "no-store" });
-    if (!res.ok) return [];
-    return res.json();
+    const { blobs } = await list({ prefix: "meta/" });
+    const friends: Friend[] = await Promise.all(
+      blobs.map(async (blob) => {
+        const res = await fetch(blob.url, { cache: "no-store" });
+        return res.json() as Promise<Friend>;
+      })
+    );
+    friends.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    return friends;
   } catch {
     return [];
   }
@@ -24,6 +29,9 @@ const danJokes = [
   "Mama always said moving to France is like a box of croissants — you never know which one's buttery enough.",
   "Mama always said you've got to put the past behind you before you can move forward… to the Côte d'Azur.",
   "Mama always said stupid is as stupid does — but moving to the French Riviera ain't stupid at all.",
+  "Mama always said France is like a long trail run — it hurts in the beginning, but you never want it to end.",
+  "Mama always said if you're gonna run, run somewhere beautiful. Looks like you listened.",
+  "Mama always said home is wherever your running shoes are. Bienvenue, Dan.",
 ];
 
 const ralucaJokes = [
@@ -31,6 +39,9 @@ const ralucaJokes = [
   "¡No puedor creer! ¡Nos mudamos a la Costa Azul, jarl! ¡Qué nivel, macho!",
   "¡Amigo del señor! ¡Madrid nos querrá, pero Francia nos necesita, pecador!",
   "¡Fistro! ¡La gente de Madrid llora, pecador! ¡Hasta luego, maricón!",
+  "¡Diodén! ¡La Costa Azul es de los nuestros, pecador! ¡Qué te doy!",
+  "¡Fistro! ¡Madrid al bolo, Francia al garete! ¡Hasta luego, jarl!",
+  "¡No puedor! ¡El Mediterráneo nos espera, pecador de la pradera!",
 ];
 
 const sizeClasses = ["text-2xl", "text-lg", "text-base", "text-xl", "text-sm", "text-2xl", "text-lg", "text-base"];
@@ -115,47 +126,21 @@ export default async function HomePage() {
       {/* Avatars */}
       <section style={{ maxWidth: "800px", margin: "40px auto", padding: "0 20px", display: "flex", gap: "40px", justifyContent: "center", flexWrap: "wrap" }}>
         {/* Dan */}
-        <div style={{ flex: "1", minWidth: "280px", maxWidth: "340px", display: "flex", flexDirection: "column", alignItems: "center", gap: "20px" }}>
-          <div className="bubble" style={{ width: "100%", minHeight: "96px", position: "relative" }}>
-            {danJokes.map((joke, i) => (
-              <span key={i} className={`joke-wrapper joke-${i}`}>{joke}</span>
-            ))}
-          </div>
-          <div style={{
-            width: "100px", height: "100px", borderRadius: "50%",
-            border: "3px solid #e94560",
-            background: "#1a1a1a",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: "3rem"
-          }}>
-            🏃‍♂️
-          </div>
+        <div style={{ flex: "1", minWidth: "280px", maxWidth: "340px", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
+          <AvatarPlayer prefix="dan" count={4} borderColor="#e94560" />
           <p style={{ fontFamily: "Impact, sans-serif", fontSize: "1.4rem", letterSpacing: "0.1em", color: "#fff", margin: 0 }}>DAN LUPU</p>
         </div>
 
         {/* Raluca */}
-        <div style={{ flex: "1", minWidth: "280px", maxWidth: "340px", display: "flex", flexDirection: "column", alignItems: "center", gap: "20px" }}>
-          <div className="bubble" style={{ width: "100%", minHeight: "96px", position: "relative" }}>
-            {ralucaJokes.map((joke, i) => (
-              <span key={i} className={`joke-wrapper joke-${i}`}>{joke}</span>
-            ))}
-          </div>
-          <div style={{
-            width: "100px", height: "100px", borderRadius: "50%",
-            border: "3px solid #f5c97a",
-            background: "#1a1a1a",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: "3rem"
-          }}>
-            💃
-          </div>
+        <div style={{ flex: "1", minWidth: "280px", maxWidth: "340px", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
+          <AvatarPlayer prefix="raluca" count={4} borderColor="#f5c97a" />
           <p style={{ fontFamily: "Impact, sans-serif", fontSize: "1.4rem", letterSpacing: "0.1em", color: "#fff", margin: 0 }}>RALUCA</p>
         </div>
       </section>
 
       {/* CTA */}
-      <section style={{ textAlign: "center", padding: "40px 20px" }}>
-        <p style={{ fontSize: "1.2rem", color: "#aaa", marginBottom: "20px" }}>
+      <section style={{ textAlign: "center", padding: "40px 20px", display: "flex", flexDirection: "column", alignItems: "center", gap: "16px" }}>
+        <p style={{ fontSize: "1.2rem", color: "#aaa", marginBottom: "4px" }}>
           ¿Quieres dejarles un mensaje?
         </p>
         <Link href="/crear" style={{
@@ -168,9 +153,21 @@ export default async function HomePage() {
           fontFamily: "Impact, sans-serif",
           letterSpacing: "0.1em",
           textTransform: "uppercase",
-          transition: "background 0.2s"
         }}>
           CREAR MI DESPEDIDA
+        </Link>
+        <Link href="/slideshow" style={{
+          display: "inline-block",
+          background: "none",
+          border: "1px solid #333",
+          color: "#666",
+          padding: "10px 28px",
+          borderRadius: "4px",
+          fontSize: "0.9rem",
+          fontFamily: "sans-serif",
+          letterSpacing: "0.08em",
+        }}>
+          ▶ Ver la despedida
         </Link>
       </section>
 
