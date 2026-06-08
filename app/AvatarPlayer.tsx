@@ -53,7 +53,7 @@ export default function AvatarPlayer({ prefix, count, borderColor, circular, sta
           muted
           playsInline
           onEnded={handleEnded}
-          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", transform: `scale(${zoom}) translateY(${yShift}%)`, transformOrigin: "center center" }}
+          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", transform: `scale(${zoom}) translateY(${yShift}%)`, transformOrigin: "center top" }}
         />
         <div style={{
           position: "absolute",
