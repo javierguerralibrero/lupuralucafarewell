@@ -146,13 +146,13 @@ export default async function HomePage() {
       <section style={{ maxWidth: "600px", margin: "40px auto", padding: "0 20px", display: "flex", gap: "48px", justifyContent: "center", flexWrap: "wrap" }}>
         {/* Dan */}
         <div style={{ width: "220px", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
-          <AvatarPlayer prefix="dan_sq" count={1} startIndex={0} borderColor="#e94560" />
+          <AvatarPlayer prefix="dan_sq" count={1} startIndex={0} borderColor="#e94560" zoom={1.15} />
           <p style={{ fontFamily: "Impact, sans-serif", fontSize: "1.4rem", letterSpacing: "0.1em", color: "#fff", margin: 0 }}>DAN LUPU</p>
         </div>
 
         {/* Raluca */}
         <div style={{ width: "220px", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
-          <AvatarPlayer prefix="raluca_sq" count={1} startIndex={0} borderColor="#f5c97a" />
+          <AvatarPlayer prefix="raluca_sq" count={1} startIndex={0} borderColor="#f5c97a" zoom={1.1} />
           <p style={{ fontFamily: "Impact, sans-serif", fontSize: "1.4rem", letterSpacing: "0.1em", color: "#fff", margin: 0 }}>RALUCA</p>
         </div>
       </section>
@@ -175,19 +175,47 @@ export default async function HomePage() {
         }}>
           CREAR MI DESPEDIDA
         </Link>
-        <Link href="/slideshow" style={{
-          display: "inline-block",
-          background: "none",
-          border: "1px solid #333",
-          color: "#666",
-          padding: "10px 28px",
-          borderRadius: "4px",
-          fontSize: "0.9rem",
-          fontFamily: "sans-serif",
-          letterSpacing: "0.08em",
-        }}>
-          ▶ Ver la despedida
-        </Link>
+        <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", justifyContent: "center" }}>
+          <Link href="/slideshow" style={{
+            display: "inline-block",
+            background: "none",
+            border: "1px solid #333",
+            color: "#666",
+            padding: "10px 28px",
+            borderRadius: "4px",
+            fontSize: "0.9rem",
+            fontFamily: "sans-serif",
+            letterSpacing: "0.08em",
+          }}>
+            ▶ Ver la despedida
+          </Link>
+          <Link href="/fotos" style={{
+            display: "inline-block",
+            background: "none",
+            border: "1px solid #333",
+            color: "#666",
+            padding: "10px 28px",
+            borderRadius: "4px",
+            fontSize: "0.9rem",
+            fontFamily: "sans-serif",
+            letterSpacing: "0.08em",
+          }}>
+            🖼 Fotos
+          </Link>
+          <Link href="/amigos" style={{
+            display: "inline-block",
+            background: "none",
+            border: "1px solid #333",
+            color: "#666",
+            padding: "10px 28px",
+            borderRadius: "4px",
+            fontSize: "0.9rem",
+            fontFamily: "sans-serif",
+            letterSpacing: "0.08em",
+          }}>
+            💌 Felicitaciones
+          </Link>
+        </div>
       </section>
 
       {/* Friends Wall */}

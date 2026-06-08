@@ -83,14 +83,18 @@ export default function AvatarPlayer({ prefix, count, borderColor, circular, sta
   }
 
   return (
-    <div style={{
-      width: "100%",
-      position: "relative",
-      borderRadius: "12px",
-      overflow: "hidden",
-      border: `2px solid ${borderColor}`,
-      background: "#111",
-    }}>
+    <div
+      onClick={toggleMute}
+      style={{
+        width: "100%",
+        position: "relative",
+        borderRadius: "12px",
+        overflow: "hidden",
+        border: `2px solid ${borderColor}`,
+        background: "#111",
+        cursor: "pointer",
+      }}
+    >
       <video
         ref={videoRef}
         key={current}
@@ -99,8 +103,24 @@ export default function AvatarPlayer({ prefix, count, borderColor, circular, sta
         muted
         playsInline
         onEnded={handleEnded}
-        style={{ width: "100%", height: "auto", display: "block" }}
+        style={{ width: "100%", height: "auto", display: "block", transform: zoom !== 1 ? `scale(${zoom})` : undefined }}
       />
+      <div style={{
+        position: "absolute",
+        bottom: "8px",
+        right: "8px",
+        background: "rgba(0,0,0,0.55)",
+        borderRadius: "50%",
+        width: "28px",
+        height: "28px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: "14px",
+        pointerEvents: "none",
+      }}>
+        {muted ? "🔇" : "🔊"}
+      </div>
     </div>
   );
 }
