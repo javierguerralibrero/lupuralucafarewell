@@ -7,15 +7,16 @@ interface Props {
   count: number;
   borderColor: string;
   circular?: boolean;
+  startIndex?: number;
 }
 
-export default function AvatarPlayer({ prefix, count, borderColor, circular }: Props) {
-  const [current, setCurrent] = useState(0);
+export default function AvatarPlayer({ prefix, count, borderColor, circular, startIndex = 0 }: Props) {
+  const [current, setCurrent] = useState(startIndex);
   const [muted, setMuted] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   function handleEnded() {
-    setCurrent((prev) => (prev + 1) % count);
+    setCurrent((prev) => startIndex + (prev - startIndex + 1) % count);
   }
 
   function toggleMute() {
