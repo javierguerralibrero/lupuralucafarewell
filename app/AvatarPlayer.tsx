@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 
 interface Props {
   prefix: string;
@@ -20,6 +20,13 @@ export default function AvatarPlayer({ prefix, count, borderColor, circular, sta
   function handleEnded() {
     setCurrent((prev) => startIndex + (prev - startIndex + 1) % count);
   }
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.muted = true;
+      videoRef.current.play().catch(() => {});
+    }
+  }, [current]);
 
   function toggleMute() {
     const v = videoRef.current;
