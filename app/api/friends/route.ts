@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { kv } from "@vercel/kv";
+import { list } from "@vercel/blob";
 
 interface FriendEntry {
   name: string;
@@ -10,19 +10,16 @@ interface FriendEntry {
 
 export async function GET() {
   try {
-    const raw = await kv.hgetall<Record<string, string>>("friends");
-    if (!raw) {
-      return NextResponse.json([]);
-    }
+    const { blobs } = await list({ prefix: "meta/" });
 
-    const friends: FriendEntry[] = Object.values(raw).map((val) => {
-      if (typeof val === "string") {
-        return JSON.parse(val) as FriendEntry;
-      }
-      return val as unknown as FriendEntry;
-    });
+    const friends: FriendEntry[] = await Promise.all(
+      blobs.map(async (blob) => {
+        const res = await fetch(blob.url);
+        return res.json() as Promise<FriendEntry>;
+      })
+    );
 
-    friends.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    friends.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
 
     return NextResponse.json(friends);
   } catch (err) {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { kv } from "@vercel/kv";
+import { list } from "@vercel/blob";
 
 interface FriendEntry {
   name: string;
@@ -15,13 +15,14 @@ interface RouteContext {
 export async function GET(_req: NextRequest, context: RouteContext) {
   try {
     const { slug } = await context.params;
-    const raw = await kv.hget<string>("friends", slug);
+    const { blobs } = await list({ prefix: `meta/${slug}.json` });
 
-    if (!raw) {
+    if (!blobs.length) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    const entry: FriendEntry = typeof raw === "string" ? JSON.parse(raw) : raw;
+    const res = await fetch(blobs[0].url);
+    const entry: FriendEntry = await res.json();
 
     return NextResponse.json(entry);
   } catch (err) {

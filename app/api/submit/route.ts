@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { put } from "@vercel/blob";
-import { kv } from "@vercel/kv";
 import { generateFriendPage } from "@/lib/claude";
 
 function toSlug(name: string): string {
@@ -52,14 +51,11 @@ export async function POST(req: NextRequest) {
       contentType: "text/html",
     });
 
-    // Store metadata in KV
-    await kv.hset("friends", {
-      [slug]: JSON.stringify({
-        name,
-        slug,
-        createdAt: new Date().toISOString(),
-        pageUrl: pageBlob.url,
-      }),
+    // Store metadata as a blob
+    const meta = { name, slug, createdAt: new Date().toISOString(), pageUrl: pageBlob.url };
+    await put(`meta/${slug}.json`, JSON.stringify(meta), {
+      access: "public",
+      contentType: "application/json",
     });
 
     return NextResponse.json({ slug });
