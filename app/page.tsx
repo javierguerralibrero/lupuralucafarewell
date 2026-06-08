@@ -146,13 +146,13 @@ export default async function HomePage() {
       <section style={{ maxWidth: "600px", margin: "40px auto", padding: "0 20px", display: "flex", gap: "48px", justifyContent: "center", flexWrap: "wrap" }}>
         {/* Dan */}
         <div style={{ width: "220px", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
-          <AvatarPlayer prefix="dan_sq" count={1} startIndex={0} borderColor="#e94560" circular />
+          <AvatarPlayer prefix="dan_sq" count={1} startIndex={0} borderColor="#e94560" />
           <p style={{ fontFamily: "Impact, sans-serif", fontSize: "1.4rem", letterSpacing: "0.1em", color: "#fff", margin: 0 }}>DAN LUPU</p>
         </div>
 
         {/* Raluca */}
         <div style={{ width: "220px", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
-          <AvatarPlayer prefix="raluca_sq" count={1} startIndex={0} borderColor="#f5c97a" circular />
+          <AvatarPlayer prefix="raluca_sq" count={1} startIndex={0} borderColor="#f5c97a" />
           <p style={{ fontFamily: "Impact, sans-serif", fontSize: "1.4rem", letterSpacing: "0.1em", color: "#fff", margin: 0 }}>RALUCA</p>
         </div>
       </section>
