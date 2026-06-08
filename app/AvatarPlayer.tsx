@@ -8,9 +8,11 @@ interface Props {
   borderColor: string;
   circular?: boolean;
   startIndex?: number;
+  zoom?: number;
+  yShift?: number;
 }
 
-export default function AvatarPlayer({ prefix, count, borderColor, circular, startIndex = 0 }: Props) {
+export default function AvatarPlayer({ prefix, count, borderColor, circular, startIndex = 0, zoom = 1, yShift = 0 }: Props) {
   const [current, setCurrent] = useState(startIndex);
   const [muted, setMuted] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -51,7 +53,7 @@ export default function AvatarPlayer({ prefix, count, borderColor, circular, sta
           muted
           playsInline
           onEnded={handleEnded}
-          style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 15%", display: "block" }}
+          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", transform: `scale(${zoom}) translateY(${yShift}%)`, transformOrigin: "center center" }}
         />
         <div style={{
           position: "absolute",

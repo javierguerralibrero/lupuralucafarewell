@@ -127,7 +127,7 @@ export default async function HomePage() {
       <section style={{ maxWidth: "600px", margin: "40px auto", padding: "0 20px", display: "flex", gap: "48px", justifyContent: "center", flexWrap: "wrap" }}>
         {/* Dan */}
         <div style={{ width: "220px", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
-          <AvatarPlayer prefix="dan" count={1} startIndex={1} borderColor="#e94560" circular />
+          <AvatarPlayer prefix="dan" count={1} startIndex={1} borderColor="#e94560" circular zoom={2.2} yShift={-20} />
           <p style={{ fontFamily: "Impact, sans-serif", fontSize: "1.4rem", letterSpacing: "0.1em", color: "#fff", margin: 0 }}>DAN LUPU</p>
         </div>
 
