@@ -32,9 +32,10 @@ export default function AvatarPlayer({ prefix, count, borderColor, circular }: P
           key={current}
           src={`/avatars/${prefix}_${current}.mp4`}
           autoPlay
+          muted
           playsInline
           onEnded={handleEnded}
-          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+          style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 15%", display: "block" }}
         />
       </div>
     );
@@ -54,6 +55,7 @@ export default function AvatarPlayer({ prefix, count, borderColor, circular }: P
         key={current}
         src={`/avatars/${prefix}_${current}.mp4`}
         autoPlay
+        muted
         playsInline
         onEnded={handleEnded}
         style={{ width: "100%", height: "auto", display: "block" }}
