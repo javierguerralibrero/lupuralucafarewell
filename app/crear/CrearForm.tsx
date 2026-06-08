@@ -8,22 +8,36 @@ export default function CrearForm() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [message, setMessage] = useState("");
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [dragging, setDragging] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [successSlug, setSuccessSlug] = useState("");
+  const [instructions, setInstructions] = useState("");
+  const [avatarPrompt, setAvatarPrompt] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  function addFiles(newFiles: FileList | null) {
+    if (!newFiles) return;
+    const arr = Array.from(newFiles);
+    setFiles((prev) => {
+      const combined = [...prev, ...arr];
+      return combined.slice(0, 6); // max 6 files
+    });
+  }
+
+  function removeFile(index: number) {
+    setFiles((prev) => prev.filter((_, i) => i !== index));
+  }
 
   function handleDrop(e: DragEvent<HTMLDivElement>) {
     e.preventDefault();
     setDragging(false);
-    const dropped = e.dataTransfer.files[0];
-    if (dropped) setFile(dropped);
+    addFiles(e.dataTransfer.files);
   }
 
   function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
-    if (e.target.files?.[0]) setFile(e.target.files[0]);
+    addFiles(e.target.files);
+    e.target.value = "";
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -39,13 +53,11 @@ export default function CrearForm() {
       const formData = new FormData();
       formData.append("name", name.trim());
       formData.append("message", message.trim());
-      if (file) formData.append("file", file);
+      formData.append("instructions", instructions.trim());
+      formData.append("avatarPrompt", avatarPrompt.trim());
+      files.forEach((f) => formData.append("files", f));
 
-      const res = await fetch("/api/submit", {
-        method: "POST",
-        body: formData,
-      });
-
+      const res = await fetch("/api/submit", { method: "POST", body: formData });
       const data = await res.json();
 
       if (!res.ok) {
@@ -54,7 +66,6 @@ export default function CrearForm() {
         return;
       }
 
-      setSuccessSlug(data.slug);
       router.push(`/${data.slug}`);
     } catch {
       setError("Error de conexión. Inténtalo de nuevo.");
@@ -77,12 +88,10 @@ export default function CrearForm() {
   return (
     <div style={{ background: "#0a0a0a", minHeight: "100vh", color: "#fff", padding: "40px 20px" }}>
       <div style={{ maxWidth: "620px", margin: "0 auto" }}>
-        {/* Back */}
         <Link href="/" style={{ color: "#555", fontSize: "0.85rem", display: "inline-flex", alignItems: "center", gap: "6px", marginBottom: "32px" }}>
           ← Volver al muro
         </Link>
 
-        {/* Title */}
         <h1 style={{ fontFamily: "Impact, Arial Black, sans-serif", fontSize: "2rem", letterSpacing: "0.05em", marginBottom: "8px" }}>
           Tu despedida para Dan &amp; Raluca
         </h1>
@@ -124,8 +133,10 @@ export default function CrearForm() {
           {/* File upload */}
           <div>
             <label style={{ display: "block", color: "#aaa", fontSize: "0.85rem", marginBottom: "8px", letterSpacing: "0.05em", textTransform: "uppercase" }}>
-              Foto o vídeo (opcional · máx 200 MB)
+              Fotos o vídeo (opcional · máx 6 archivos)
             </label>
+
+            {/* Drop zone */}
             <div
               onDrop={handleDrop}
               onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
@@ -134,52 +145,87 @@ export default function CrearForm() {
               style={{
                 border: `2px dashed ${dragging ? "#e94560" : "#333"}`,
                 borderRadius: "8px",
-                padding: "32px",
+                padding: "24px",
                 textAlign: "center",
                 cursor: "pointer",
                 background: dragging ? "#1a0a0e" : "#0f0f0f",
                 transition: "all 0.2s",
               }}
             >
-              {file ? (
-                <div>
-                  <p style={{ color: "#f5c97a", marginBottom: "4px" }}>✓ {file.name}</p>
-                  <p style={{ color: "#555", fontSize: "0.8rem" }}>{(file.size / 1024 / 1024).toFixed(1)} MB</p>
-                </div>
-              ) : (
-                <div>
-                  <p style={{ color: "#555", marginBottom: "4px" }}>Arrastra aquí o haz clic para seleccionar</p>
-                  <p style={{ color: "#333", fontSize: "0.8rem" }}>Imágenes o vídeos</p>
-                </div>
-              )}
+              <p style={{ color: "#555", marginBottom: "4px" }}>Arrastra aquí o haz clic para seleccionar</p>
+              <p style={{ color: "#333", fontSize: "0.8rem" }}>Fotos y/o vídeos · máx 6 archivos</p>
             </div>
             <input
               ref={fileInputRef}
               type="file"
               accept="image/*,video/*"
+              multiple
               onChange={handleFileChange}
               style={{ display: "none" }}
             />
+
+            {/* File list */}
+            {files.length > 0 && (
+              <div style={{ marginTop: "12px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                {files.map((f, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#111", border: "1px solid #222", borderRadius: "6px", padding: "8px 12px" }}>
+                    <span style={{ color: "#f5c97a", fontSize: "0.85rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "80%" }}>
+                      {f.type.startsWith("video/") ? "🎬" : "📷"} {f.name}
+                      <span style={{ color: "#555", marginLeft: "8px" }}>{(f.size / 1024 / 1024).toFixed(1)} MB</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => removeFile(i)}
+                      style={{ background: "none", border: "none", color: "#555", cursor: "pointer", fontSize: "1rem", padding: "0 4px" }}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Magic box */}
-          <div style={{
-            background: "rgba(100, 50, 180, 0.15)",
-            border: "1px solid rgba(100, 50, 180, 0.4)",
-            borderRadius: "8px",
-            padding: "20px",
-          }}>
+          <div style={{ background: "rgba(100, 50, 180, 0.15)", border: "1px solid rgba(100, 50, 180, 0.4)", borderRadius: "8px", padding: "20px" }}>
             <p style={{ color: "#c084fc", fontSize: "0.9rem", margin: 0, lineHeight: "1.6" }}>
-              ✨ <strong>Claude AI</strong> generará una página única y personalizada con tu mensaje — layout, colores, tipografía, animaciones, todo. Cada página es una obra de arte diferente.
+              ✨ <strong>Claude AI</strong> generará una página única y personalizada con tu mensaje — cada uno recibe un estilo visual diferente: póster vintage, carta manuscrita, portada de periódico, galería minimalista... ninguna igual.
             </p>
           </div>
 
-          {/* Error */}
-          {error && (
-            <p style={{ color: "#e94560", fontSize: "0.9rem" }}>{error}</p>
-          )}
+          {/* Avatar prompt */}
+          <div style={{ background: "rgba(229, 69, 96, 0.08)", border: "1px solid rgba(229, 69, 96, 0.3)", borderRadius: "8px", padding: "20px" }}>
+            <label style={{ display: "block", color: "#f5c97a", fontSize: "0.85rem", marginBottom: "4px", letterSpacing: "0.05em", textTransform: "uppercase" }}>
+              ¿Qué quieres que te digan Dan y Raluca? (opcional)
+            </label>
+            <p style={{ color: "#888", fontSize: "0.8rem", marginBottom: "12px", lineHeight: "1.5" }}>
+              Cuéntanos algo — un recuerdo, una broma, un momento especial con ellos... La IA generará un mensaje personalizado en voz de Dan y Raluca para tu tarjeta.
+            </p>
+            <textarea
+              value={avatarPrompt}
+              onChange={(e) => setAvatarPrompt(e.target.value)}
+              placeholder="Ej: Cuando jugamos al pádel siempre me ganaba pero nunca lo admitía..."
+              rows={3}
+              style={{ ...inputStyle, resize: "vertical" }}
+            />
+          </div>
 
-          {/* Submit */}
+          {/* Instructions */}
+          <div>
+            <label style={{ display: "block", color: "#aaa", fontSize: "0.85rem", marginBottom: "8px", letterSpacing: "0.05em", textTransform: "uppercase" }}>
+              Instrucciones para la IA (opcional)
+            </label>
+            <textarea
+              value={instructions}
+              onChange={(e) => setInstructions(e.target.value)}
+              placeholder="Ej: Pon el vídeo en el centro. Usa tipografía grande y negrita. Estilo muy colorido..."
+              rows={3}
+              style={{ ...inputStyle, resize: "vertical" }}
+            />
+          </div>
+
+          {error && <p style={{ color: "#e94560", fontSize: "0.9rem" }}>{error}</p>}
+
           <button
             type="submit"
             disabled={loading}
