@@ -109,15 +109,16 @@ export default function AvatarPlayer({ prefix, count, borderColor, circular, sta
         position: "absolute",
         bottom: "8px",
         right: "8px",
-        background: "rgba(0,0,0,0.55)",
+        background: "rgba(0,0,0,0.7)",
         borderRadius: "50%",
-        width: "28px",
-        height: "28px",
+        width: "32px",
+        height: "32px",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        fontSize: "14px",
+        fontSize: "16px",
         pointerEvents: "none",
+        zIndex: 2,
       }}>
         {muted ? "🔇" : "🔊"}
       </div>
