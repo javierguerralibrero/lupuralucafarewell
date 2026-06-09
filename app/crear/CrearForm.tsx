@@ -268,7 +268,8 @@ export default function CrearForm() {
             </p>
           </div>
 
-          {/* Avatar prompt */}
+          {/* Avatar prompt — hidden until avatars are ready */}
+          {false && (
           <div style={{ background: "rgba(229, 69, 96, 0.08)", border: "1px solid rgba(229, 69, 96, 0.3)", borderRadius: "8px", padding: "20px" }}>
             <label style={{ display: "block", color: "#f5c97a", fontSize: "0.85rem", marginBottom: "4px", letterSpacing: "0.05em", textTransform: "uppercase" }}>
               ¿Qué quieres que te digan Dan y Raluca? (opcional)
@@ -284,6 +285,7 @@ export default function CrearForm() {
               style={{ ...inputStyle, resize: "vertical" }}
             />
           </div>
+          )}
 
           {/* Instructions */}
           <div>
