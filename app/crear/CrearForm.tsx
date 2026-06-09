@@ -295,7 +295,7 @@ export default function CrearForm() {
             <textarea
               value={instructions}
               onChange={(e) => setInstructions(e.target.value)}
-              placeholder="Ej: Pon el vídeo en el centro. Usa tipografía grande y negrita. Estilo muy colorido..."
+              placeholder="Ej: Fondo negro con olas de mar en turquesa, vídeo grande centrado, iconos de corazones flotando, tipografía elegante en dorado..."
               rows={3}
               style={{ ...inputStyle, resize: "vertical" }}
             />
