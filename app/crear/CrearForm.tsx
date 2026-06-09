@@ -5,9 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { upload } from "@vercel/blob/client";
 
-const VIDEO_COMPRESS_THRESHOLD = 80 * 1024 * 1024; // 80 MB
+const VIDEO_LARGE_THRESHOLD = 80 * 1024 * 1024; // 80 MB → lower quality
 
-async function compressVideo(
+async function convertVideo(
   file: File,
   onProgress: (pct: number) => void
 ): Promise<File> {
@@ -27,11 +27,14 @@ async function compressVideo(
   const inputName = `in.${ext}`;
   await ffmpeg.writeFile(inputName, await fetchFile(file));
 
+  // Large files: compress harder (crf 28). Small files: preserve quality (crf 20).
+  const crf = file.size > VIDEO_LARGE_THRESHOLD ? "28" : "20";
+
   await ffmpeg.exec([
     "-i", inputName,
     "-vf", "scale='min(1280,iw)':-2",
     "-c:v", "libx264",
-    "-crf", "28",
+    "-crf", crf,
     "-preset", "fast",
     "-c:a", "aac",
     "-b:a", "128k",
@@ -96,11 +99,11 @@ export default function CrearForm() {
         let file = files[i];
         const isVideo = file.type.startsWith("video/");
 
-        // Compress video if over threshold
-        if (isVideo && file.size > VIDEO_COMPRESS_THRESHOLD) {
-          setStatusMsg(`Comprimiendo vídeo ${i + 1}/${files.length}...`);
+        // Always convert video to H.264 MP4 for universal browser compatibility
+        if (isVideo) {
+          setStatusMsg(`Convirtiendo vídeo ${i + 1}/${files.length} a formato compatible...`);
           setProgress(0);
-          file = await compressVideo(file, setProgress);
+          file = await convertVideo(file, setProgress);
           setProgress(null);
         }
 
@@ -241,8 +244,8 @@ export default function CrearForm() {
                     <span style={{ color: "#f5c97a", fontSize: "0.85rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "80%" }}>
                       {f.type.startsWith("video/") ? "🎬" : "📷"} {f.name}
                       <span style={{ color: "#555", marginLeft: "8px" }}>{(f.size / 1024 / 1024).toFixed(1)} MB</span>
-                      {f.type.startsWith("video/") && f.size > VIDEO_COMPRESS_THRESHOLD && (
-                        <span style={{ color: "#c084fc", marginLeft: "8px", fontSize: "0.75rem" }}>se comprimirá</span>
+                      {f.type.startsWith("video/") && (
+                        <span style={{ color: "#c084fc", marginLeft: "8px", fontSize: "0.75rem" }}>se convertirá a MP4</span>
                       )}
                     </span>
                     <button
