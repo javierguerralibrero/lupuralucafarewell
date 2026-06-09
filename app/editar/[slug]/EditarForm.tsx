@@ -2,6 +2,28 @@
 
 import { useState, useRef, DragEvent, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
+import { upload } from "@vercel/blob/client";
+
+const VIDEO_LARGE_THRESHOLD = 80 * 1024 * 1024;
+
+async function convertVideo(file: File, onProgress: (pct: number) => void): Promise<File> {
+  const { FFmpeg } = await import("@ffmpeg/ffmpeg");
+  const { fetchFile, toBlobURL } = await import("@ffmpeg/util");
+  const ffmpeg = new FFmpeg();
+  ffmpeg.on("progress", ({ progress }) => onProgress(Math.round(progress * 100)));
+  const base = "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd";
+  await ffmpeg.load({
+    coreURL: await toBlobURL(`${base}/ffmpeg-core.js`, "text/javascript"),
+    wasmURL: await toBlobURL(`${base}/ffmpeg-core.wasm`, "application/wasm"),
+  });
+  const ext = file.name.split(".").pop() || "mp4";
+  await ffmpeg.writeFile(`in.${ext}`, await fetchFile(file));
+  const crf = file.size > VIDEO_LARGE_THRESHOLD ? "28" : "20";
+  await ffmpeg.exec(["-i", `in.${ext}`, "-vf", "scale='min(1280,iw)':-2", "-c:v", "libx264", "-crf", crf, "-preset", "fast", "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", "out.mp4"]);
+  const data = await ffmpeg.readFile("out.mp4");
+  const bytes = new Uint8Array(data instanceof Uint8Array ? data : new Uint8Array());
+  return new File([bytes], "video.mp4", { type: "video/mp4" });
+}
 
 interface Props {
   slug: string;
@@ -63,7 +85,7 @@ export default function EditarForm({
     }
   }
 
-  function handleDrop(e: DragEvent<HTMLDivElement>) {
+  function handleDrop(e: DragEvent<HTMLElement>) {
     e.preventDefault();
     setDragging(false);
     addFiles(e.dataTransfer.files);
@@ -94,6 +116,9 @@ export default function EditarForm({
     }
   }
 
+  const [statusMsg, setStatusMsg] = useState("");
+  const [progress, setProgress] = useState<number | null>(null);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!message.trim()) {
@@ -104,12 +129,37 @@ export default function EditarForm({
     setLoading(true);
 
     try {
+      const uploadedUrls: string[] = [];
+      const ts = Date.now();
+
+      for (let i = 0; i < newFiles.length; i++) {
+        let file = newFiles[i];
+        const isVideo = file.type.startsWith("video/");
+
+        if (isVideo) {
+          setStatusMsg(`Convirtiendo vídeo ${i + 1}/${newFiles.length} a formato compatible...`);
+          setProgress(0);
+          file = await convertVideo(file, setProgress);
+          setProgress(null);
+        }
+
+        setStatusMsg(`Subiendo archivo ${i + 1} de ${newFiles.length}...`);
+        const ext = file.name.split(".").pop() || "bin";
+        const blob = await upload(`uploads/tmp-${ts}-${i}.${ext}`, file, {
+          access: "public",
+          handleUploadUrl: "/api/blob-upload",
+          onUploadProgress: ({ percentage }) => setProgress(Math.round(percentage)),
+        });
+        uploadedUrls.push(blob.url);
+        setProgress(null);
+      }
+
+      setStatusMsg("🎩 SebâstIAn está regenerando tu página...");
       const formData = new FormData();
       formData.append("name", initialName);
       formData.append("message", message.trim());
       formData.append("instructions", instructions.trim());
-      formData.append("existingMediaUrls", JSON.stringify(existingMediaUrls));
-      newFiles.forEach((f) => formData.append("files", f));
+      formData.append("existingMediaUrls", JSON.stringify([...existingMediaUrls, ...uploadedUrls]));
 
       const res = await fetch("/api/submit", { method: "POST", body: formData });
       const data = await res.json();
@@ -117,6 +167,7 @@ export default function EditarForm({
       if (!res.ok) {
         setError(data.error || "Algo salió mal. Inténtalo de nuevo.");
         setLoading(false);
+        setStatusMsg("");
         return;
       }
 
@@ -124,6 +175,7 @@ export default function EditarForm({
     } catch {
       setError("Error de conexión. Inténtalo de nuevo.");
       setLoading(false);
+      setStatusMsg("");
     }
   }
 
@@ -256,12 +308,13 @@ export default function EditarForm({
             <label style={{ display: "block", color: "#aaa", fontSize: "0.85rem", marginBottom: "8px", letterSpacing: "0.05em", textTransform: "uppercase" }}>
               Añadir fotos o vídeos (opcional · máx 6 nuevos)
             </label>
-            <div
+            <label
+              htmlFor="editar-file-input"
               onDrop={handleDrop}
               onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
               onDragLeave={() => setDragging(false)}
-              onClick={() => fileInputRef.current?.click()}
               style={{
+                display: "block",
                 border: `2px dashed ${dragging ? "#e94560" : "#333"}`,
                 borderRadius: "8px",
                 padding: "24px",
@@ -272,15 +325,16 @@ export default function EditarForm({
               }}
             >
               <p style={{ color: "#555", marginBottom: "4px" }}>Arrastra aquí o haz clic para seleccionar</p>
-              <p style={{ color: "#333", fontSize: "0.8rem" }}>Fotos y/o vídeos</p>
-            </div>
+              <p style={{ color: "#333", fontSize: "0.8rem" }}>Fotos y/o vídeos · los vídeos se convertirán a MP4</p>
+            </label>
             <input
+              id="editar-file-input"
               ref={fileInputRef}
               type="file"
               accept="image/*,video/*"
               multiple
               onChange={handleFileChange}
-              style={{ display: "none" }}
+              style={{ position: "absolute", opacity: 0, width: "1px", height: "1px", overflow: "hidden" }}
             />
 
             {newFiles.length > 0 && (
@@ -319,6 +373,17 @@ export default function EditarForm({
           </div>
 
           {error && <p style={{ color: "#e94560", fontSize: "0.9rem" }}>{error}</p>}
+
+          {loading && statusMsg && (
+            <div style={{ background: "#111", border: "1px solid #222", borderRadius: "8px", padding: "16px" }}>
+              <p style={{ color: "#c084fc", fontSize: "0.9rem", margin: "0 0 10px" }}>{statusMsg}</p>
+              {progress !== null && (
+                <div style={{ background: "#222", borderRadius: "4px", height: "4px", overflow: "hidden" }}>
+                  <div style={{ background: "#e94560", height: "100%", width: `${progress}%`, transition: "width 0.3s ease", borderRadius: "4px" }} />
+                </div>
+              )}
+            </div>
+          )}
 
           <button
             type="submit"
