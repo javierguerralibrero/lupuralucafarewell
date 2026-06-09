@@ -3,6 +3,46 @@
 import { useState, useRef, DragEvent, ChangeEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { upload } from "@vercel/blob/client";
+
+const VIDEO_COMPRESS_THRESHOLD = 80 * 1024 * 1024; // 80 MB
+
+async function compressVideo(
+  file: File,
+  onProgress: (pct: number) => void
+): Promise<File> {
+  const { FFmpeg } = await import("@ffmpeg/ffmpeg");
+  const { fetchFile, toBlobURL } = await import("@ffmpeg/util");
+
+  const ffmpeg = new FFmpeg();
+  ffmpeg.on("progress", ({ progress }) => onProgress(Math.round(progress * 100)));
+
+  const base = "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd";
+  await ffmpeg.load({
+    coreURL: await toBlobURL(`${base}/ffmpeg-core.js`, "text/javascript"),
+    wasmURL: await toBlobURL(`${base}/ffmpeg-core.wasm`, "application/wasm"),
+  });
+
+  const ext = file.name.split(".").pop() || "mp4";
+  const inputName = `in.${ext}`;
+  await ffmpeg.writeFile(inputName, await fetchFile(file));
+
+  await ffmpeg.exec([
+    "-i", inputName,
+    "-vf", "scale='min(1280,iw)':-2",
+    "-c:v", "libx264",
+    "-crf", "28",
+    "-preset", "fast",
+    "-c:a", "aac",
+    "-b:a", "128k",
+    "-movflags", "+faststart",
+    "out.mp4",
+  ]);
+
+  const data = await ffmpeg.readFile("out.mp4");
+  const bytes = new Uint8Array(data instanceof Uint8Array ? data : new Uint8Array());
+  return new File([bytes], "video.mp4", { type: "video/mp4" });
+}
 
 export default function CrearForm() {
   const router = useRouter();
@@ -11,6 +51,8 @@ export default function CrearForm() {
   const [files, setFiles] = useState<File[]>([]);
   const [dragging, setDragging] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [statusMsg, setStatusMsg] = useState("");
+  const [progress, setProgress] = useState<number | null>(null);
   const [error, setError] = useState("");
   const [instructions, setInstructions] = useState("");
   const [avatarPrompt, setAvatarPrompt] = useState("");
@@ -18,11 +60,7 @@ export default function CrearForm() {
 
   function addFiles(newFiles: FileList | null) {
     if (!newFiles) return;
-    const arr = Array.from(newFiles);
-    setFiles((prev) => {
-      const combined = [...prev, ...arr];
-      return combined.slice(0, 6); // max 6 files
-    });
+    setFiles((prev) => [...prev, ...Array.from(newFiles)].slice(0, 6));
   }
 
   function removeFile(index: number) {
@@ -50,12 +88,41 @@ export default function CrearForm() {
     setLoading(true);
 
     try {
+      // 1. Upload all files directly to Vercel Blob from the browser
+      const uploadedUrls: string[] = [];
+      const ts = Date.now();
+
+      for (let i = 0; i < files.length; i++) {
+        let file = files[i];
+        const isVideo = file.type.startsWith("video/");
+
+        // Compress video if over threshold
+        if (isVideo && file.size > VIDEO_COMPRESS_THRESHOLD) {
+          setStatusMsg(`Comprimiendo vídeo ${i + 1}/${files.length}...`);
+          setProgress(0);
+          file = await compressVideo(file, setProgress);
+          setProgress(null);
+        }
+
+        setStatusMsg(`Subiendo archivo ${i + 1} de ${files.length}...`);
+        const ext = file.name.split(".").pop() || "bin";
+        const blob = await upload(`uploads/tmp-${ts}-${i}.${ext}`, file, {
+          access: "public",
+          handleUploadUrl: "/api/blob-upload",
+          onUploadProgress: ({ percentage }) => setProgress(Math.round(percentage)),
+        });
+        uploadedUrls.push(blob.url);
+        setProgress(null);
+      }
+
+      // 2. Submit metadata + URLs (no raw files) to the server
+      setStatusMsg("🎩 SebâstIAn está creando tu página...");
       const formData = new FormData();
       formData.append("name", name.trim());
       formData.append("message", message.trim());
       formData.append("instructions", instructions.trim());
       formData.append("avatarPrompt", avatarPrompt.trim());
-      files.forEach((f) => formData.append("files", f));
+      formData.append("existingMediaUrls", JSON.stringify(uploadedUrls));
 
       const res = await fetch("/api/submit", { method: "POST", body: formData });
       const data = await res.json();
@@ -63,13 +130,16 @@ export default function CrearForm() {
       if (!res.ok) {
         setError(data.error || "Algo salió mal. Inténtalo de nuevo.");
         setLoading(false);
+        setStatusMsg("");
         return;
       }
 
       router.push(`/${data.slug}`);
-    } catch {
+    } catch (err) {
+      console.error(err);
       setError("Error de conexión. Inténtalo de nuevo.");
       setLoading(false);
+      setStatusMsg("");
     }
   }
 
@@ -135,8 +205,6 @@ export default function CrearForm() {
             <label style={{ display: "block", color: "#aaa", fontSize: "0.85rem", marginBottom: "8px", letterSpacing: "0.05em", textTransform: "uppercase" }}>
               Fotos o vídeo (opcional · máx 6 archivos)
             </label>
-
-            {/* Drop zone */}
             <div
               onDrop={handleDrop}
               onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
@@ -153,7 +221,7 @@ export default function CrearForm() {
               }}
             >
               <p style={{ color: "#555", marginBottom: "4px" }}>Arrastra aquí o haz clic para seleccionar</p>
-              <p style={{ color: "#333", fontSize: "0.8rem" }}>Fotos y/o vídeos · máx 6 archivos</p>
+              <p style={{ color: "#333", fontSize: "0.8rem" }}>Fotos y/o vídeos · máx 6 archivos · sin límite de tamaño</p>
             </div>
             <input
               ref={fileInputRef}
@@ -164,7 +232,6 @@ export default function CrearForm() {
               style={{ display: "none" }}
             />
 
-            {/* File list */}
             {files.length > 0 && (
               <div style={{ marginTop: "12px", display: "flex", flexDirection: "column", gap: "8px" }}>
                 {files.map((f, i) => (
@@ -172,6 +239,9 @@ export default function CrearForm() {
                     <span style={{ color: "#f5c97a", fontSize: "0.85rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "80%" }}>
                       {f.type.startsWith("video/") ? "🎬" : "📷"} {f.name}
                       <span style={{ color: "#555", marginLeft: "8px" }}>{(f.size / 1024 / 1024).toFixed(1)} MB</span>
+                      {f.type.startsWith("video/") && f.size > VIDEO_COMPRESS_THRESHOLD && (
+                        <span style={{ color: "#c084fc", marginLeft: "8px", fontSize: "0.75rem" }}>se comprimirá</span>
+                      )}
                     </span>
                     <button
                       type="button"
@@ -189,7 +259,7 @@ export default function CrearForm() {
           {/* Magic box */}
           <div style={{ background: "rgba(100, 50, 180, 0.15)", border: "1px solid rgba(100, 50, 180, 0.4)", borderRadius: "8px", padding: "20px" }}>
             <p style={{ color: "#c084fc", fontSize: "0.9rem", margin: 0, lineHeight: "1.6" }}>
-              ✨ <strong>Claude AI</strong> generará una página única y personalizada con tu mensaje — cada uno recibe un estilo visual diferente: póster vintage, carta manuscrita, portada de periódico, galería minimalista... ninguna igual.
+              🎩 <strong>SebâstIAn</strong> generará una página única y personalizada con tu mensaje — cada uno recibe un estilo visual diferente: póster vintage, carta manuscrita, portada de periódico, galería minimalista... ninguna igual.
             </p>
           </div>
 
@@ -213,7 +283,7 @@ export default function CrearForm() {
           {/* Instructions */}
           <div>
             <label style={{ display: "block", color: "#aaa", fontSize: "0.85rem", marginBottom: "8px", letterSpacing: "0.05em", textTransform: "uppercase" }}>
-              Instrucciones para la IA (opcional)
+              Para SebâstIAn 🎩 (opcional)
             </label>
             <textarea
               value={instructions}
@@ -226,12 +296,24 @@ export default function CrearForm() {
 
           {error && <p style={{ color: "#e94560", fontSize: "0.9rem" }}>{error}</p>}
 
+          {/* Loading state with progress */}
+          {loading && (
+            <div style={{ background: "#111", border: "1px solid #222", borderRadius: "8px", padding: "16px" }}>
+              <p style={{ color: "#c084fc", fontSize: "0.9rem", margin: "0 0 10px" }}>{statusMsg}</p>
+              {progress !== null && (
+                <div style={{ background: "#222", borderRadius: "4px", height: "4px", overflow: "hidden" }}>
+                  <div style={{ background: "#e94560", height: "100%", width: `${progress}%`, transition: "width 0.3s ease", borderRadius: "4px" }} />
+                </div>
+              )}
+            </div>
+          )}
+
           <button
             type="submit"
             disabled={loading}
             style={{
-              background: loading ? "#444" : "#e94560",
-              color: "#fff",
+              background: loading ? "#222" : "#e94560",
+              color: loading ? "#555" : "#fff",
               border: "none",
               borderRadius: "6px",
               padding: "16px",
@@ -243,7 +325,7 @@ export default function CrearForm() {
               transition: "background 0.2s",
             }}
           >
-            {loading ? "✨ La IA está creando tu página..." : "🚀 Crear mi página"}
+            {loading ? "Procesando..." : "🚀 Crear mi página"}
           </button>
         </form>
       </div>

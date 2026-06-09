@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { put, del, list } from "@vercel/blob";
 import { generateFriendPage } from "@/lib/claude";
 
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 function toSlug(name: string): string {
   return name
