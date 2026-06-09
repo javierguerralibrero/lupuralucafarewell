@@ -205,12 +205,13 @@ export default function CrearForm() {
             <label style={{ display: "block", color: "#aaa", fontSize: "0.85rem", marginBottom: "8px", letterSpacing: "0.05em", textTransform: "uppercase" }}>
               Fotos o vídeo (opcional · máx 6 archivos)
             </label>
-            <div
+            <label
+              htmlFor="file-upload-input"
               onDrop={handleDrop}
               onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
               onDragLeave={() => setDragging(false)}
-              onClick={() => fileInputRef.current?.click()}
               style={{
+                display: "block",
                 border: `2px dashed ${dragging ? "#e94560" : "#333"}`,
                 borderRadius: "8px",
                 padding: "24px",
@@ -222,14 +223,15 @@ export default function CrearForm() {
             >
               <p style={{ color: "#555", marginBottom: "4px" }}>Arrastra aquí o haz clic para seleccionar</p>
               <p style={{ color: "#333", fontSize: "0.8rem" }}>Fotos y/o vídeos · máx 6 archivos · sin límite de tamaño</p>
-            </div>
+            </label>
             <input
+              id="file-upload-input"
               ref={fileInputRef}
               type="file"
               accept="image/*,video/*"
               multiple
               onChange={handleFileChange}
-              style={{ display: "none" }}
+              style={{ position: "absolute", opacity: 0, width: "1px", height: "1px", overflow: "hidden" }}
             />
 
             {files.length > 0 && (
