@@ -199,6 +199,15 @@ Output ONLY the complete HTML, nothing else.${instructionsSection}`;
   if (html.endsWith("```")) html = html.slice(0, -3);
   html = html.trim();
 
+  // Guarantee media is always visible regardless of Claude's CSS animations
+  const mediaFix = `<style>img,video{opacity:1!important;visibility:visible!important}</style>`;
+  const headClose = html.indexOf("</head>");
+  if (headClose !== -1) {
+    html = html.slice(0, headClose) + mediaFix + html.slice(headClose);
+  } else {
+    html = mediaFix + html;
+  }
+
   if (avatarPrompt && slug) {
     html = injectAvatarSection(html, slug);
   }
