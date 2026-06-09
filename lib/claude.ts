@@ -177,7 +177,7 @@ Requirements:
 - Include subtle Dan & Raluca personality touches: Dan runs ultramarathons, they're Romanian, moving to the French coast
 - Include this back button exactly: <a href="/" style="position:fixed;top:20px;left:20px;background:rgba(0,0,0,0.6);color:#fff;padding:8px 16px;border-radius:4px;font-family:sans-serif;font-size:13px;text-decoration:none;z-index:9999;">← Volver al muro</a>
 - Mobile responsive with a max-width container
-- 1-2 subtle CSS animations max
+- 1-2 subtle CSS animations max — NEVER apply opacity:0 or visibility:hidden as a starting state on img, video, or any media element; they must always be visible
 - Emotionally resonant — the message is the hero, design serves it
 
 Output ONLY the complete HTML, nothing else.${instructionsSection}`;

@@ -166,7 +166,7 @@ export default function CrearForm() {
           Tu despedida para Dan &amp; Raluca
         </h1>
         <p style={{ color: "#888", marginBottom: "36px", lineHeight: "1.6" }}>
-          Rellena esto. La IA diseña el resto — tú no tocas nada.
+          Rellena esto. SebâstIAn diseña el resto — tú no tocas nada.
         </p>
 
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
@@ -271,7 +271,7 @@ export default function CrearForm() {
               ¿Qué quieres que te digan Dan y Raluca? (opcional)
             </label>
             <p style={{ color: "#888", fontSize: "0.8rem", marginBottom: "12px", lineHeight: "1.5" }}>
-              Cuéntanos algo — un recuerdo, una broma, un momento especial con ellos... La IA generará un mensaje personalizado en voz de Dan y Raluca para tu tarjeta.
+              Cuéntanos algo — un recuerdo, una broma, un momento especial con ellos... SebâstIAn generará un mensaje personalizado en voz de Dan y Raluca para tu tarjeta.
             </p>
             <textarea
               value={avatarPrompt}
