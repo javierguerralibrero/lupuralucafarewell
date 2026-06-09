@@ -153,7 +153,7 @@ export default function EditarForm({
           Editar tu despedida
         </h1>
         <p style={{ color: "#888", marginBottom: "36px", lineHeight: "1.6" }}>
-          Cambia el mensaje, las fotos o las instrucciones — la IA regenerará tu página.
+          Cambia el mensaje, las fotos o las instrucciones — SebâstIAn regenerará tu página.
         </p>
 
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
@@ -307,7 +307,7 @@ export default function EditarForm({
           {/* Instructions */}
           <div>
             <label style={{ display: "block", color: "#aaa", fontSize: "0.85rem", marginBottom: "8px", letterSpacing: "0.05em", textTransform: "uppercase" }}>
-              Instrucciones para la IA (opcional)
+              Para SebâstIAn 🎩 (opcional)
             </label>
             <textarea
               value={instructions}
@@ -337,7 +337,7 @@ export default function EditarForm({
               transition: "background 0.2s",
             }}
           >
-            {loading ? "✨ La IA está regenerando tu página..." : "🔄 Regenerar mi página"}
+            {loading ? "🎩 SebâstIAn está regenerando tu página..." : "🔄 Regenerar mi página"}
           </button>
 
           <button
