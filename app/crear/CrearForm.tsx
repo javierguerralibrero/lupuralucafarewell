@@ -67,7 +67,7 @@ export default function CrearForm() {
     setFiles((prev) => prev.filter((_, i) => i !== index));
   }
 
-  function handleDrop(e: DragEvent<HTMLDivElement>) {
+  function handleDrop(e: DragEvent<HTMLElement>) {
     e.preventDefault();
     setDragging(false);
     addFiles(e.dataTransfer.files);
