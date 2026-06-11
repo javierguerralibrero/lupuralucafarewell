@@ -27,8 +27,12 @@ function pick(): (typeof TRANSITIONS)[number] {
 // speed slider: 1 (fast, 1.5s) to 5 (slow, 10s)
 const SPEED_MS = [1500, 3000, 5000, 7000, 10000];
 
+const LS_KEY = "fotos-position";
+
 export default function FotosCarrusel({ photos }: Props) {
-  const [cur,  setCur]  = useState(0);
+  const [cur,  setCur]  = useState(() => {
+    try { const s = localStorage.getItem(LS_KEY); return s ? Math.min(Number(s), photos.length - 1) : 0; } catch { return 0; }
+  });
   const [prev, setPrev] = useState<number | null>(null);
   const [tr,   setTr]   = useState<TrName>("tr-fade");
   const [trDur, setTrDur] = useState(1000);
@@ -43,6 +47,11 @@ export default function FotosCarrusel({ photos }: Props) {
     setTr(chosen.name);
     setTrDur(chosen.dur);
   }, []);
+
+  // persist position
+  useEffect(() => {
+    try { localStorage.setItem(LS_KEY, String(cur)); } catch {}
+  }, [cur]);
 
   // auto-advance
   useEffect(() => {
