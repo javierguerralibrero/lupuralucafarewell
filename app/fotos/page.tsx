@@ -1,4 +1,3 @@
-import { list } from "@/lib/r2";
 import FotosCarrusel from "./FotosCarrusel";
 
 interface ManifestPhoto {
@@ -7,9 +6,8 @@ interface ManifestPhoto {
 
 async function getPhotoUrls(): Promise<string[]> {
   try {
-    const { blobs } = await list({ prefix: "madrid-photos/manifest.json" });
-    if (!blobs.length) return [];
-    const manifest: { photos: ManifestPhoto[] } = await fetch(blobs[0].url, { cache: "no-store" }).then((r) => r.json());
+    const manifestUrl = `${process.env.R2_PUBLIC_URL}/madrid-photos/manifest.json`;
+    const manifest: { photos: ManifestPhoto[] } = await fetch(manifestUrl, { cache: "no-store" }).then((r) => r.json());
     return manifest.photos.map((p) => p.url);
   } catch {
     return [];

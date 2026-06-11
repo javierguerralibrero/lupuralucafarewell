@@ -27,9 +27,8 @@ async function getFriends(): Promise<Friend[]> {
 
 async function getBgPhotoUrls(): Promise<string[]> {
   try {
-    const { blobs } = await list({ prefix: "madrid-photos/manifest.json" });
-    if (!blobs.length) return [];
-    const manifest: { photos: { url: string }[] } = await fetch(blobs[0].url, { cache: "no-store" }).then((r) => r.json());
+    const manifestUrl = `${process.env.R2_PUBLIC_URL}/madrid-photos/manifest.json`;
+    const manifest: { photos: { url: string }[] } = await fetch(manifestUrl, { cache: "no-store" }).then((r) => r.json());
     const urls = manifest.photos.map((p) => p.url);
     // Shuffle server-side so each visit is different
     for (let i = urls.length - 1; i > 0; i--) {
