@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { list } from "@vercel/blob";
+import { list } from "@/lib/r2";
 import AvatarPlayer from "./AvatarPlayer";
 import HomeBg from "./HomeBg";
 

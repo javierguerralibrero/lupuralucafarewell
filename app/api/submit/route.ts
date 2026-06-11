@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { put, del, list } from "@vercel/blob";
+import { put, del, list } from "@/lib/r2";
 import { generateFriendPage } from "@/lib/claude";
 
 export const maxDuration = 300;

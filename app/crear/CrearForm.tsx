@@ -3,7 +3,6 @@
 import { useState, useRef, DragEvent, ChangeEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { upload } from "@vercel/blob/client";
 
 const VIDEO_LARGE_THRESHOLD = 80 * 1024 * 1024; // 80 MB → lower quality
 
@@ -109,12 +108,22 @@ export default function CrearForm() {
 
         setStatusMsg(`Subiendo archivo ${i + 1} de ${files.length}...`);
         const ext = file.name.split(".").pop() || "bin";
-        const blob = await upload(`uploads/tmp-${ts}-${i}.${ext}`, file, {
-          access: "public",
-          handleUploadUrl: "/api/blob-upload",
-          onUploadProgress: ({ percentage }) => setProgress(Math.round(percentage)),
+        const key = `uploads/tmp-${ts}-${i}.${ext}`;
+        const { url: presignedUrl, publicUrl } = await fetch("/api/blob-upload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key, contentType: file.type || "application/octet-stream" }),
+        }).then((r) => r.json());
+        await new Promise<void>((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.upload.onprogress = (e) => { if (e.lengthComputable) setProgress(Math.round((e.loaded / e.total) * 100)); };
+          xhr.onload = () => (xhr.status < 300 ? resolve() : reject(new Error(`Upload failed: ${xhr.status}`)));
+          xhr.onerror = () => reject(new Error("Upload network error"));
+          xhr.open("PUT", presignedUrl);
+          xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
+          xhr.send(file);
         });
-        uploadedUrls.push(blob.url);
+        uploadedUrls.push(publicUrl);
         setProgress(null);
       }
 

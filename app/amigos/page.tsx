@@ -1,4 +1,4 @@
-import { list } from "@vercel/blob";
+import { list } from "@/lib/r2";
 import AmigosCarrusel from "./AmigosCarrusel";
 
 interface FriendMeta {

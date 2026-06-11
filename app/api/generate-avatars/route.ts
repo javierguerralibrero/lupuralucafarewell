@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { put, list } from "@vercel/blob";
+import { put, list } from "@/lib/r2";
 import { generateAvatarScripts } from "@/lib/claude";
 import {
   DAN_ASSET_ID,
