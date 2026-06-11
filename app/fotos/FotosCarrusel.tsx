@@ -24,7 +24,8 @@ function pick(): (typeof TRANSITIONS)[number] {
   return TRANSITIONS[Math.floor(Math.random() * TRANSITIONS.length)];
 }
 
-const AUTO_MS = 5000;
+// speed slider: 1 (fast, 1.5s) to 5 (slow, 10s)
+const SPEED_MS = [1500, 3000, 5000, 7000, 10000];
 
 export default function FotosCarrusel({ photos }: Props) {
   const [cur,  setCur]  = useState(0);
@@ -32,6 +33,8 @@ export default function FotosCarrusel({ photos }: Props) {
   const [tr,   setTr]   = useState<TrName>("tr-fade");
   const [trDur, setTrDur] = useState(1000);
   const [playing, setPlaying] = useState(true);
+  const [speed, setSpeed] = useState(2); // index into SPEED_MS, default 5s
+  const autoMs = SPEED_MS[speed];
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const go = useCallback((next: number) => {
@@ -44,9 +47,9 @@ export default function FotosCarrusel({ photos }: Props) {
   // auto-advance
   useEffect(() => {
     if (!playing || photos.length < 2) return;
-    timerRef.current = setTimeout(() => go((cur + 1) % photos.length), AUTO_MS);
+    timerRef.current = setTimeout(() => go((cur + 1) % photos.length), autoMs);
     return () => { if (timerRef.current) clearTimeout(timerRef.current); };
-  }, [cur, playing, photos.length, go]);
+  }, [cur, playing, photos.length, go, autoMs]);
 
   // keyboard
   useEffect(() => {
@@ -96,7 +99,7 @@ export default function FotosCarrusel({ photos }: Props) {
 
         /* progress bar */
         @keyframes progress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-        .fprog { transform-origin: left; animation: progress ${AUTO_MS}ms linear; }
+        .fprog { transform-origin: left; animation: progress ${autoMs}ms linear; }
       `}</style>
 
       {/* exiting layer */}
@@ -152,13 +155,24 @@ export default function FotosCarrusel({ photos }: Props) {
         onClick={() => go((cur + 1) % photos.length)}
       >›</button>
 
-      {/* play/pause */}
-      <button
-        onClick={() => setPlaying(p => !p)}
-        style={{ position: "absolute", bottom: "20px", left: "50%", transform: "translateX(-50%)", zIndex: 20, background: "rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.45)", borderRadius: "24px", padding: "6px 20px", fontSize: "0.78rem", cursor: "pointer", fontFamily: "sans-serif", letterSpacing: "0.08em" }}
-      >
-        {playing ? "⏸ Pausa" : "▶ Play"}
-      </button>
+      {/* bottom controls */}
+      <div style={{ position: "absolute", bottom: "20px", left: "50%", transform: "translateX(-50%)", zIndex: 20, display: "flex", alignItems: "center", gap: "16px" }}>
+        <button
+          onClick={() => setPlaying(p => !p)}
+          style={{ background: "rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.45)", borderRadius: "24px", padding: "6px 20px", fontSize: "0.78rem", cursor: "pointer", fontFamily: "sans-serif", letterSpacing: "0.08em" }}
+        >
+          {playing ? "⏸ Pausa" : "▶ Play"}
+        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "24px", padding: "6px 14px" }}>
+          <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.7rem", fontFamily: "sans-serif" }}>🐢</span>
+          <input
+            type="range" min={0} max={4} step={1} value={4 - speed}
+            onChange={e => setSpeed(4 - Number(e.target.value))}
+            style={{ width: "72px", accentColor: "#e94560", cursor: "pointer" }}
+          />
+          <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.7rem", fontFamily: "sans-serif" }}>🐇</span>
+        </div>
+      </div>
     </div>
   );
 }
