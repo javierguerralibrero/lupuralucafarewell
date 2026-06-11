@@ -37,6 +37,7 @@ export default function FotosCarrusel({ photos }: Props) {
   const [tr,   setTr]   = useState<TrName>("tr-fade");
   const [trDur, setTrDur] = useState(1000);
   const [playing, setPlaying] = useState(true);
+  const [fit, setFit] = useState<"cover" | "contain">("cover");
   const [speed, setSpeed] = useState(2); // index into SPEED_MS, default 5s
   const autoMs = SPEED_MS[speed];
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -82,7 +83,7 @@ export default function FotosCarrusel({ photos }: Props) {
       <style>{`
         /* layers */
         .fl { position: absolute; inset: 0; }
-        .fl img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .fl img { width: 100%; height: 100%; object-fit: ${fit}; display: block; }
 
         /* entering */
         .fl-enter { animation-name: var(--tr); animation-duration: var(--dur); animation-timing-function: ease-out; animation-fill-mode: both; z-index: 2; }
@@ -181,6 +182,13 @@ export default function FotosCarrusel({ photos }: Props) {
           />
           <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.7rem", fontFamily: "sans-serif" }}>🐇</span>
         </div>
+        <button
+          onClick={() => setFit(f => f === "cover" ? "contain" : "cover")}
+          title={fit === "cover" ? "Ver foto entera" : "Rellenar pantalla"}
+          style={{ background: "rgba(0,0,0,0.5)", border: `1px solid ${fit === "contain" ? "#e94560" : "rgba(255,255,255,0.1)"}`, color: fit === "contain" ? "#e94560" : "rgba(255,255,255,0.45)", borderRadius: "24px", padding: "6px 14px", fontSize: "0.78rem", cursor: "pointer", fontFamily: "sans-serif" }}
+        >
+          {fit === "cover" ? "□ Foto entera" : "▣ Rellenar"}
+        </button>
       </div>
     </div>
   );
